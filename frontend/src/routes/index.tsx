@@ -24,10 +24,6 @@ const routes: RouteObject[] = [
         element: <TimelinePage />,
       },
       {
-        path: "status",
-        element: <StatusPage />,
-      },
-      {
         path: "settings",
         element: <SettingsPage />,
       },

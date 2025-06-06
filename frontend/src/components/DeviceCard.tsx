@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Device } from '../types';
 import { useUpdateDeviceAlias } from '../hooks/useDevices';
+import { formatLastSeen, formatFirstSeen } from '../utils/timeUtils';
 
 interface DeviceCardProps {
   device: Device;
@@ -16,7 +17,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, className = '' }
     if (aliasValue.trim() !== (device.custom_name || '')) {
       updateAliasMutation.mutate({
         deviceId: device.id,
-        aliasData: { custom_name: aliasValue.trim() || '' }
+        customName: aliasValue.trim() || ''
       });
     }
     setIsEditingAlias(false);
@@ -27,19 +28,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, className = '' }
     setIsEditingAlias(false);
   };
 
-  const formatLastSeen = (lastSeen: string) => {
-    const date = new Date(lastSeen);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return '刚刚';
-    if (diffMins < 60) return `${diffMins}分钟前`;
-    if (diffHours < 24) return `${diffHours}小时前`;
-    return `${diffDays}天前`;
-  };
 
   const getStatusColor = () => {
     return device.is_online ? 'bg-green-500' : 'bg-gray-400';
@@ -154,7 +143,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, className = '' }
 
         {/* 时间信息 */}
         <div className="text-xs text-gray-500 mt-3 space-y-1">
-          <div>首次发现：{new Date(device.first_seen).toLocaleString('zh-CN')}</div>
+          <div>首次发现：{formatFirstSeen(device.first_seen)}</div>
           <div>最后在线：{formatLastSeen(device.last_seen)}</div>
         </div>
       </div>

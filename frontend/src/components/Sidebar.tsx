@@ -1,12 +1,12 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { 
-  FiHome, 
-  FiMonitor, 
-  FiBarChart, 
-  FiSettings, 
-  FiActivity 
-} from 'react-icons/fi';
+import React from "react";
+import { NavLink } from "react-router-dom";
+import {
+  FiHome,
+  FiMonitor,
+  FiBarChart,
+  FiSettings,
+  FiActivity,
+} from "react-icons/fi";
 
 interface NavigationItem {
   name: string;
@@ -15,20 +15,19 @@ interface NavigationItem {
 }
 
 const navigation: NavigationItem[] = [
-  { name: '仪表板', path: '/', icon: FiHome },
-  { name: '设备列表', path: '/devices', icon: FiMonitor },
-  { name: '时间线图表', path: '/timeline', icon: FiBarChart },
-  { name: '网络状态', path: '/status', icon: FiActivity },
-  { name: '设置', path: '/settings', icon: FiSettings },
+  { name: "仪表板", path: "/", icon: FiHome },
+  { name: "设备列表", path: "/devices", icon: FiMonitor },
+  { name: "时间线图表", path: "/timeline", icon: FiBarChart },
+  { name: "设置", path: "/settings", icon: FiSettings },
 ];
 
 export const Sidebar: React.FC = () => {
   return (
-    <div className="bg-white w-64 min-h-screen border-r border-gray-200 flex flex-col">
+    <div className="flex h-screen w-64 flex-col overflow-y-hidden border-r border-gray-200 bg-white">
       {/* Logo区域 */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="border-b border-gray-200 p-6">
         <h1 className="text-xl font-bold text-gray-900">局域网监控器</h1>
-        <p className="text-sm text-gray-500 mt-1">LAN Watcher</p>
+        <p className="mt-1 text-sm text-gray-500">LAN Watcher</p>
       </div>
 
       {/* 导航菜单 */}
@@ -39,10 +38,10 @@ export const Sidebar: React.FC = () => {
               <NavLink
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                  `flex items-center rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      ? "border-r-2 border-blue-700 bg-blue-50 text-blue-700"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                   }`
                 }
               >
@@ -55,12 +54,12 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* 底部信息 */}
-      <div className="p-4 border-t border-gray-200">
-        <div className="text-xs text-gray-500 text-center">
+      <div className="border-t border-gray-200 p-4">
+        <div className="text-center text-xs text-gray-500">
           <p>版本 v1.0.0</p>
           <p className="mt-1">© 2024 LAN Watcher</p>
         </div>
       </div>
     </div>
   );
-}; 
+};

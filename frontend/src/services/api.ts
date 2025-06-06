@@ -6,6 +6,10 @@ import {
   ChartConfig,
   ScanResult,
   ApiResponse,
+  ScanConfig,
+  ScanPreset,
+  ConfigValidationResult,
+  NetworkTestResult,
 } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -39,7 +43,7 @@ class ApiService {
     return ApiService.request<Device[]>("/api/devices");
   }
 
-  public static async getDevice(id: number): Promise<Device> {
+  public static async getDevice(id: string): Promise<Device> {
     return ApiService.request<Device>(`/api/devices/${id}`);
   }
 
@@ -48,7 +52,7 @@ class ApiService {
   }
 
   public static async getDeviceHistory(
-    deviceId: number,
+    deviceId: string,
     hours: number = 24,
   ): Promise<any[]> {
     return ApiService.request<any[]>(
@@ -57,7 +61,7 @@ class ApiService {
   }
 
   public static async updateDeviceAlias(
-    id: number,
+    id: string,
     customName: string,
   ): Promise<ApiResponse<Device>> {
     return ApiService.request<ApiResponse<Device>>(`/api/devices/${id}/alias`, {
@@ -152,6 +156,53 @@ class ApiService {
     macAddress: string,
   ): Promise<{ mac_address: string; vendor: string }> {
     return ApiService.request(`/api/oui/${encodeURIComponent(macAddress)}`);
+  }
+
+  // ===== 扫描配置 API =====
+  
+  // 获取当前扫描配置
+  public static async getScanConfig(): Promise<ScanConfig> {
+    return ApiService.request<ScanConfig>("/api/scan-config");
+  }
+
+  // 更新扫描配置
+  public static async updateScanConfig(
+    config: Partial<ScanConfig>,
+  ): Promise<ScanConfig> {
+    return ApiService.request<ScanConfig>("/api/scan-config", {
+      method: "PUT",
+      body: JSON.stringify(config),
+    });
+  }
+
+  // 获取可用的预设配置列表
+  public static async getScanPresets(): Promise<ScanPreset[]> {
+    return ApiService.request<ScanPreset[]>("/api/scan-config/presets");
+  }
+
+  // 加载预设配置
+  public static async loadScanPreset(presetName: string): Promise<ScanConfig> {
+    return ApiService.request<ScanConfig>(`/api/scan-config/presets/${presetName}`, {
+      method: "POST",
+    });
+  }
+
+  // 验证扫描配置
+  public static async validateScanConfig(
+    config: Partial<ScanConfig>,
+  ): Promise<ConfigValidationResult> {
+    return ApiService.request<ConfigValidationResult>("/api/scan-config/validate", {
+      method: "POST",
+      body: JSON.stringify(config),
+    });
+  }
+
+  // 测试网络配置
+  public static async testNetworkConfig(subnetCidr: string): Promise<NetworkTestResult> {
+    return ApiService.request<NetworkTestResult>("/api/scan-config/test-network", {
+      method: "POST",
+      body: JSON.stringify({ subnet_cidr: subnetCidr }),
+    });
   }
 }
 

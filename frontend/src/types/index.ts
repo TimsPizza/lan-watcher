@@ -1,5 +1,5 @@
 export interface Device {
-  id: number;
+  id: string;
   ip_address: string;
   mac_address: string | null;
   hostname: string | null;
@@ -13,15 +13,15 @@ export interface Device {
 }
 
 export interface ScanRecord {
-  id: number;
-  device_id: number;
+  id: string;
+  device_id: string;
   scan_time: string;
   is_online: boolean;
   response_time: number | null;
 }
 
 export interface ScanSession {
-  id: number;
+  id: string;
   start_time: string;
   end_time: string | null;
   subnet: string;
@@ -48,6 +48,7 @@ export interface ScanResult {
 export interface ScanStatus {
   scanning: boolean;
   scan_interval: number;
+  last_scan_time: string | null;
 }
 
 export interface OuiLookup {
@@ -67,7 +68,7 @@ export interface ApiResponse<T> {
 
 // 新增：设备时间线数据点
 export interface DeviceTimelinePoint {
-  device_id: number;
+  device_id: string;
   device_name: string;
   ip_address: string;
   timestamp: string;
@@ -76,7 +77,7 @@ export interface DeviceTimelinePoint {
 
 // 新增：设备在线时间段
 export interface DeviceOnlinePeriod {
-  device_id: number;
+  device_id: string;
   device_name: string;
   ip_address: string;
   start_time: string;
@@ -87,7 +88,7 @@ export interface DeviceOnlinePeriod {
 export interface DayTimelineData {
   date: string;
   devices: {
-    device_id: number;
+    device_id: string;
     device_name: string;
     ip_address: string;
     online_periods: {
@@ -110,4 +111,88 @@ export interface ChartConfig {
   show_offline_periods: boolean;
   time_format: '12h' | '24h';
   device_sort_order: 'name' | 'ip' | 'last_seen';
+}
+
+// ===== 扫描配置相关类型 =====
+
+// 扫描配置接口
+export interface ScanConfig {
+  // 网络配置
+  subnet_cidr: string | null;
+  auto_detect_subnet: boolean;
+  exclude_ips: string[];
+  
+  // 性能参数
+  scan_rate: number;
+  max_workers: number;
+  scan_timeout: string;
+  max_retries: number;
+  
+  // 功能开关
+  resolve_hostnames: boolean;
+  fetch_vendor_info: boolean;
+  arp_lookup_enabled: boolean;
+  fallback_enabled: boolean;
+  
+  // 高级选项
+  ping_methods: string[];
+  tcp_ping_ports: number[];
+  ack_ping_ports: number[];
+  
+  // 扫描类型配置
+  enable_port_scan: boolean;
+  port_range: string;
+}
+
+// 预设配置信息
+export interface ScanPreset {
+  name: string;
+  display_name: string;
+  description: string;
+}
+
+// 配置验证结果
+export interface ConfigValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
+// 网络测试结果
+export interface NetworkTestResult {
+  valid: boolean;
+  network_address?: string;
+  broadcast_address?: string;
+  num_hosts?: number;
+  prefix_length?: number;
+  error?: string;
+}
+
+// 扫描配置更新请求
+export interface ScanConfigUpdateRequest {
+  config: Partial<ScanConfig>;
+}
+
+// 扫描配置响应
+export interface ScanConfigResponse extends ApiResponse<ScanConfig> {
+  data: ScanConfig;
+}
+
+// ===== 设备活动相关类型 =====
+
+// 设备历史记录类型
+export interface DeviceHistoryRecord {
+  id: string;
+  device_id: string;
+  scan_time: string;
+  is_online: boolean;
+  response_time: number;
+}
+
+// 设备活动类型
+export interface DeviceActivity {
+  device: Device;
+  activityType: 'online' | 'offline' | 'first_seen';
+  timestamp: string;
+  timeAgo: string;
+  previousState?: boolean;
 } 

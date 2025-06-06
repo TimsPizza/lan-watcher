@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { toast } from "react-toastify";
 import ApiService from "../services/api";
 import { useDeviceStore } from "../store/useDeviceStore";
-import { ScanResult } from "../types";
+import { ScanResult, ScanConfig } from "../types";
 
 // 查询键常量
 const QUERY_KEYS = {
@@ -54,7 +54,7 @@ export const useOnlineDevices = () => {
   );
 };
 
-export const useDevice = (deviceId: number) => {
+export const useDevice = (deviceId: string) => {
   return useQuery(
     [QUERY_KEYS.DEVICE, deviceId],
     () => ApiService.getDevice(deviceId),
@@ -65,7 +65,7 @@ export const useDevice = (deviceId: number) => {
   );
 };
 
-export const useDeviceHistory = (deviceId: number, hours: number = 24) => {
+export const useDeviceHistory = (deviceId: string, hours: number = 24) => {
   return useQuery(
     [QUERY_KEYS.DEVICE_HISTORY, deviceId, hours],
     () => ApiService.getDeviceHistory(deviceId, hours),
@@ -97,7 +97,7 @@ export const useScanStatus = () => {
 
   return useQuery(QUERY_KEYS.SCAN_STATUS, () => ApiService.getScanStatus(), {
     onSuccess: setScanStatus,
-    refetchInterval: 5000, // 5秒刷新扫描状态
+    refetchInterval: 2000, // 5秒刷新扫描状态
     staleTime: 1000,
   });
 };
@@ -147,7 +147,7 @@ export const useUpdateDeviceAlias = () => {
   const updateDevice = useDeviceStore((state) => state.updateDevice);
 
   return useMutation(
-    ({ deviceId, customName }: { deviceId: number; customName: string }) =>
+    ({ deviceId, customName }: { deviceId: string; customName: string }) =>
       ApiService.updateDeviceAlias(deviceId, customName),
     {
       onSuccess: (data, variables) => {
@@ -176,11 +176,7 @@ export const useTriggerScan = () => {
       ApiService.scanNetwork(subnet, scanType),
     {
       onSuccess: (data: ScanResult) => {
-        if (data.status === "success") {
-          toast.success(`扫描完成！发现 ${data.devices_found} 个设备`);
-        } else {
-          toast.warning(data.message || "扫描完成，但可能有问题");
-        }
+        toast.success(data.message);
 
         // 刷新设备列表和统计信息
         queryClient.invalidateQueries(QUERY_KEYS.DEVICES);
@@ -253,6 +249,100 @@ export const useSearchDevices = (query: string) => {
     {
       enabled: query.length >= 2,
       staleTime: 30000,
+    },
+  );
+};
+
+// ===== 扫描配置相关 Hooks =====
+
+// 获取当前扫描配置
+export const useScanConfig = () => {
+  return useQuery(
+    "scanConfig",
+    () => ApiService.getScanConfig(),
+    {
+      staleTime: 300000, // 5分钟
+    },
+  );
+};
+
+// 更新扫描配置
+export const useUpdateScanConfig = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    (config: Partial<ScanConfig>) => ApiService.updateScanConfig(config),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("scanConfig");
+        toast.success("扫描配置更新成功");
+      },
+      onError: (error: any) => {
+        const message = error.message || "更新扫描配置失败";
+        toast.error(message);
+      },
+    },
+  );
+};
+
+// 获取预设配置列表
+export const useScanPresets = () => {
+  return useQuery(
+    "scanPresets",
+    () => ApiService.getScanPresets(),
+    {
+      staleTime: 600000, // 10分钟
+    },
+  );
+};
+
+// 加载预设配置
+export const useLoadScanPreset = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    (presetName: string) => ApiService.loadScanPreset(presetName),
+    {
+      onSuccess: (data, presetName) => {
+        queryClient.invalidateQueries("scanConfig");
+        toast.success(`已加载 "${presetName}" 预设配置`);
+      },
+      onError: (error: any) => {
+        const message = error.message || "加载预设配置失败";
+        toast.error(message);
+      },
+    },
+  );
+};
+
+// 验证扫描配置
+export const useValidateScanConfig = () => {
+  return useMutation(
+    (config: Partial<ScanConfig>) => ApiService.validateScanConfig(config),
+    {
+      onError: (error: any) => {
+        console.error("配置验证失败:", error);
+      },
+    },
+  );
+};
+
+// 测试网络配置
+export const useTestNetworkConfig = () => {
+  return useMutation(
+    (subnetCidr: string) => ApiService.testNetworkConfig(subnetCidr),
+    {
+      onSuccess: (result) => {
+        if (result.valid) {
+          toast.success("网络配置测试通过");
+        } else {
+          toast.warning(result.error || "网络配置测试失败");
+        }
+      },
+      onError: (error: any) => {
+        const message = error.message || "网络配置测试失败";
+        toast.error(message);
+      },
     },
   );
 };
