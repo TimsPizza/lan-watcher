@@ -2,7 +2,7 @@ import { DeviceTable } from "@/components/DeviceTable";
 import { useDevices } from "@/hooks/useDevices";
 import { Device } from "@/types";
 import React, { useEffect, useState } from "react";
-import { FiRefreshCw } from "react-icons/fi";
+import { FiMonitor, FiRefreshCw } from "react-icons/fi";
 import { toast } from "react-toastify";
 
 export const DevicesPage: React.FC = () => {
@@ -57,7 +57,10 @@ export const DevicesPage: React.FC = () => {
       {/* 页面标题和统计 */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">设备管理</h1>
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+            <FiMonitor className="text-blue-600" />
+            设备管理
+          </h1>
           <p className="mt-1 text-gray-600">管理和监控所有网络设备</p>
         </div>
 

@@ -238,7 +238,7 @@ export const ScanConfigForm: React.FC = () => {
                   自动检测子网
                 </label>
                 <p className="mt-1 text-xs text-gray-500">
-                  自动检测当前网络的子网范围
+                  {`自动检测当前网络的子网范围 (Docker环境可能出现异常)`}
                 </p>
               </div>
               <label className="relative inline-flex cursor-pointer items-center">
@@ -369,18 +369,6 @@ export const ScanConfigForm: React.FC = () => {
                   disabled={localConfig.auto_detect_subnet}
                   className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100"
                 />
-                <button
-                  onClick={handleTestNetwork}
-                  disabled={
-                    testNetworkMutation.isLoading || !localConfig.subnet_cidr
-                  }
-                  className="flex items-center space-x-2 rounded-lg border border-green-300 px-4 py-2 text-green-700 transition-colors hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <FiPlay className="h-4 w-4" />
-                  <span>
-                    {testNetworkMutation.isLoading ? "测试中..." : "测试"}
-                  </span>
-                </button>
               </div>
               <p className="mt-1 text-xs text-gray-500">
                 {localConfig.auto_detect_subnet

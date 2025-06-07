@@ -776,6 +776,14 @@ video {
   height: 80% !important;
 }
 
+.h-32 {
+  height: 8rem;
+}
+
+.h-28 {
+  height: 7rem;
+}
+
 .max-h-40 {
   max-height: 10rem;
 }
@@ -891,6 +899,10 @@ video {
 
 .\!w-4\/5 {
   width: 80% !important;
+}
+
+.w-10 {
+  width: 2.5rem;
 }
 
 .min-w-0 {
@@ -1016,6 +1028,10 @@ video {
 
 .items-center {
   align-items: center;
+}
+
+.justify-start {
+  justify-content: flex-start;
 }
 
 .justify-center {

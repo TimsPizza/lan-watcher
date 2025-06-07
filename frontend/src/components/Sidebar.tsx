@@ -24,10 +24,14 @@ const navigation: NavigationItem[] = [
 export const Sidebar: React.FC = () => {
   return (
     <div className="flex h-screen w-64 flex-col overflow-y-hidden border-r border-gray-200 bg-white">
-      {/* Logo区域 */}
-      <div className="border-b border-gray-200 p-6">
-        <h1 className="text-xl font-bold text-gray-900">局域网监控器</h1>
-        <p className="mt-1 text-sm text-gray-500">LAN Watcher</p>
+      <div className="flex h-28 flex-row items-start justify-start border-b border-gray-200 p-6">
+        <div className="h-full">
+          <img src="/logo.svg" alt="logo" className="h-16 w-16" />
+        </div>
+        <div className="flex h-full flex-col items-start justify-center">
+          <h1 className="text-xl font-bold text-gray-900">局域网监控器</h1>
+          <p className="mt-1 text-sm text-gray-500">LAN Watcher</p>
+        </div>
       </div>
 
       {/* 导航菜单 */}

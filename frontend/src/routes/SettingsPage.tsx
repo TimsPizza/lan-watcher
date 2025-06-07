@@ -81,7 +81,10 @@ export const SettingsPage: React.FC = () => {
       {/* 页面标题 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">系统设置</h1>
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+            <FiSettings className="text-blue-600" />
+            系统设置
+          </h1>
           <p className="mt-1 text-gray-600">配置应用的各项参数</p>
         </div>
 
