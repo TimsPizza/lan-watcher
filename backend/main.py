@@ -189,12 +189,6 @@ async def shutdown_event():
             print("Periodic scan task cancelled")
 
 
-@app.get("/")
-async def root():
-    """根路径，返回简单的HTML页面"""
-    return "hello"
-
-
 # API路由
 @app.get("/api/devices")
 async def get_devices():
@@ -379,7 +373,7 @@ async def get_timeline_data(date_str: str):
             if scan_records:
                 # 按时间正序排序（重要！）
                 scan_records.sort(key=lambda x: x.scan_time)
-                
+
                 current_period_start = None
                 last_status = None
 

@@ -1,9 +1,8 @@
-import Layout from "@/routes/Layout";
 import { Dashboard } from "@/routes/Dashboard";
 import { DevicesPage } from "@/routes/DevicesPage";
-import { TimelinePage } from "@/routes/TimelinePage";
-import { StatusPage } from "@/routes/StatusPage";
+import Layout from "@/routes/Layout";
 import { SettingsPage } from "@/routes/SettingsPage";
+import { TimelinePage } from "@/routes/TimelinePage";
 import { createHashRouter, RouteObject } from "react-router-dom";
 
 const routes: RouteObject[] = [

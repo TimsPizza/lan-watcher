@@ -1,0 +1,66 @@
+# Python相关
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.Python
+**/env/
+**/venv/
+**/.venv/
+**/pip-log.txt
+**/pip-delete-this-directory.txt
+**/.tox/
+**/.coverage
+**/.coverage.*
+**/.cache
+**/nosetests.xml
+**/coverage.xml
+**/*.cover
+**/.hypothesis/
+**/.pytest_cache/
+
+# Node.js相关
+**/node_modules/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/lerna-debug.log*
+
+# 前端构建文件（除了dist目录）
+frontend/src/
+frontend/public/
+frontend/*.json
+frontend/*.js
+frontend/*.ts
+frontend/*.config.*
+frontend/.gitignore
+
+# 开发工具和配置
+**/.git/
+**/.gitignore
+**/.gitattributes
+**/README.md
+**/CHANGELOG.md
+**/LICENSE
+**/.DS_Store
+**/.vscode/
+**/.idea/
+
+# 日志文件
+**/*.log
+**/logs/
+
+# 临时文件
+**/tmp/
+**/temp/
+**/.tmp/
+
+# 已存在的数据文件（避免覆盖现有JSON数据）
+backend/storage/data/
+
+# 系统文件
+**/.DS_Store
+**/Thumbs.db
+**/.Spotlight-V100
+**/.Trashes
+**/ehthumbs.db 

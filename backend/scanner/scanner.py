@@ -21,12 +21,7 @@ class DeviceInfo:
     open_ports: List[int] = None
 
 class NetworkScanner:
-    def __init__(self, docker_image: str = "instrumentisto/nmap:latest", scan_config=None):
-        # 延迟导入避免循环依赖
-        self.docker_image = docker_image
-        self.docker_available = self._check_docker()
-        self.use_nmap = self.docker_available  # 优先使用nmap
-        
+    def __init__(self, scan_config=None):
         # 扫描配置 - 如果没有提供则使用默认配置
         if scan_config is None:
             try:
@@ -38,19 +33,6 @@ class NetworkScanner:
         else:
             self.config = scan_config
         
-    def _check_docker(self) -> bool:
-        """检查Docker是否可用"""
-        try:
-            result = subprocess.run(
-                ['docker', '--version'], 
-                capture_output=True, 
-                text=True,
-                timeout=5
-            )
-            return result.returncode == 0
-        except Exception:
-            return False
-    
     def _get_vendor_from_oui_db(self, mac: str) -> Optional[str]:
         """从OUI数据库查找厂商信息"""
         if not mac:
@@ -92,23 +74,22 @@ class NetworkScanner:
         if self.config and self.config.subnet_cidr and not self.config.auto_detect_subnet:
             return self.config.subnet_cidr
             
-        if self.use_nmap:
-            try:
-                # 使用nmap自动发现本地网络
-                nmap_args = ['--iflist']
-                output = await self._run_nmap_command(nmap_args)
-                
-                # 解析网络接口信息
-                lines = output.split('\n')
-                for line in lines:
-                    if 'UP' in line and ('192.168.' in line or '10.' in line or '172.' in line):
-                        # 提取网络地址
-                        parts = line.split()
-                        for part in parts:
-                            if '/' in part and any(net in part for net in ['192.168.', '10.', '172.']):
-                                return part
-            except Exception:
-                pass
+        try:
+            # 使用nmap自动发现本地网络
+            nmap_args = ['--iflist']
+            output = await self._run_nmap_command(nmap_args)
+            
+            # 解析网络接口信息
+            lines = output.split('\n')
+            for line in lines:
+                if 'UP' in line and ('192.168.' in line or '10.' in line or '172.' in line):
+                    # 提取网络地址
+                    parts = line.split()
+                    for part in parts:
+                        if '/' in part and any(net in part for net in ['192.168.', '10.', '172.']):
+                            return part
+        except Exception:
+            pass
         
         # 降级到传统方法
         try:
@@ -157,12 +138,7 @@ class NetworkScanner:
     
     async def _run_nmap_command(self, nmap_args: List[str]) -> str:
         """运行nmap命令"""
-        if self.docker_available:
-            # 使用Docker运行nmap
-            cmd = ['docker', 'run', '--rm', '--network=host', self.docker_image] + nmap_args
-        else:
-            # 降级到本地nmap（如果有的话）
-            cmd = ['nmap'] + nmap_args
+        cmd = ['nmap'] + nmap_args
         
         try:
             process = await asyncio.create_subprocess_exec(
@@ -187,28 +163,30 @@ class NetworkScanner:
         if self.config and self.config.should_exclude_ip(ip):
             return None
             
-        if self.use_nmap and self.config:
-            try:
-                # 使用配置生成nmap参数
+        try:
+            # 使用配置生成nmap参数
+            if self.config:
                 nmap_args = self.config.get_nmap_args(ip)
+            else:
+                nmap_args = ['-sn', '-PE', ip]
+            
+            output = await self._run_nmap_command(nmap_args)
+            devices = self._parse_xml_output(output)
+            
+            if devices:
+                device = devices[0]
+                # 根据配置补充主机名和厂商信息
+                if not device.hostname and (not self.config or self.config.resolve_hostnames):
+                    device.hostname = await self._get_hostname(device.ip)
+                if device.mac and not device.vendor and (not self.config or self.config.fetch_vendor_info):
+                    device.vendor = self._get_vendor_from_oui_db(device.mac)
+                return device
                 
-                output = await self._run_nmap_command(nmap_args)
-                devices = self._parse_xml_output(output)
-                
-                if devices:
-                    device = devices[0]
-                    # 根据配置补充主机名和厂商信息
-                    if not device.hostname and self.config.resolve_hostnames:
-                        device.hostname = await self._get_hostname(device.ip)
-                    if device.mac and not device.vendor and self.config.fetch_vendor_info:
-                        device.vendor = self._get_vendor_from_oui_db(device.mac)
-                    return device
-                
-            except Exception as e:
-                print(f"Nmap ping error for {ip}: {e}")
-                # 降级到传统ping
-                if not self.config or not self.config.fallback_enabled:
-                    return None
+        except Exception as e:
+            print(f"Nmap ping error for {ip}: {e}")
+            # 降级到传统ping
+            if self.config and not self.config.fallback_enabled:
+                return None
         
         # 降级到传统ping方法
         try:
@@ -279,56 +257,50 @@ class NetworkScanner:
         return devices
     
     async def scan_ports(self, targets: List[str], ports: str = "1-1000") -> List[DeviceInfo]:
-        """端口扫描功能（新增）"""
+        """端口扫描功能"""
         if not targets:
             return []
         
-        if self.use_nmap:
-            try:
-                target_str = ','.join(targets)
-                nmap_args = [
-                    '-sS',  # TCP SYN扫描
-                    '-sV',  # 服务版本检测
-                    '--version-intensity', '5',
-                    '-p', ports,
-                    '--min-rate', '500',
-                    '--max-retries', '2',
-                    '-oX', '-',
-                    target_str
-                ]
-                
-                print(f"使用nmap扫描端口 {ports} 在目标: {target_str}")
-                output = await self._run_nmap_command(nmap_args)
-                devices = self._parse_xml_output(output)
-                
-                # 补充主机名和厂商信息
-                for device in devices:
-                    if not device.hostname:
-                        device.hostname = await self._get_hostname(device.ip)
-                    if device.mac and not device.vendor:
-                        device.vendor = self._get_vendor_from_oui_db(device.mac)
-                
-                return devices
-                
-            except Exception as e:
-                print(f"Nmap port scan error: {e}")
-        
-        # 如果nmap不可用，返回基础ping结果
-        print("nmap不可用，进行基础连通性检测")
-        devices = []
-        for target in targets:
-            device = await self.ping_host(target)
-            if device:
-                devices.append(device)
-        
-        return devices
+        try:
+            target_str = ','.join(targets)
+            nmap_args = [
+                '-sS',  # TCP SYN扫描
+                '-sV',  # 服务版本检测
+                '--version-intensity', '5',
+                '-p', ports,
+                '--min-rate', '500',
+                '--max-retries', '2',
+                '-oX', '-',
+                target_str
+            ]
+            
+            print(f"使用nmap扫描端口 {ports} 在目标: {target_str}")
+            output = await self._run_nmap_command(nmap_args)
+            devices = self._parse_xml_output(output)
+            
+            # 补充主机名和厂商信息
+            for device in devices:
+                if not device.hostname:
+                    device.hostname = await self._get_hostname(device.ip)
+                if device.mac and not device.vendor:
+                    device.vendor = self._get_vendor_from_oui_db(device.mac)
+            
+            return devices
+            
+        except Exception as e:
+            print(f"Nmap port scan error: {e}")
+            # 如果nmap不可用，返回基础ping结果
+            print("nmap端口扫描失败，进行基础连通性检测")
+            devices = []
+            for target in targets:
+                device = await self.ping_host(target)
+                if device:
+                    devices.append(device)
+            
+            return devices
     
     async def comprehensive_scan(self, subnet: str) -> List[DeviceInfo]:
-        """综合扫描：主机发现 + 端口扫描（新增）"""
-        if not self.use_nmap:
-            print("nmap不可用，使用基础扫描")
-            return await self.scan_subnet(subnet, "ping")
-        
+        """综合扫描：主机发现 + 端口扫描"""
         try:
             # 第一步：快速主机发现
             print(f"正在发现子网 {subnet} 中的活跃主机...")
@@ -354,7 +326,7 @@ class NetworkScanner:
             
         except Exception as e:
             print(f"Comprehensive scan error: {e}")
-            return devices  # 返回基础扫描结果
+            return devices if 'devices' in locals() else []
     
     def _parse_xml_output(self, xml_output: str) -> List[DeviceInfo]:
         """解析nmap XML输出"""
@@ -472,53 +444,51 @@ class NetworkScanner:
         """扫描整个子网"""
         devices = []
         
-        if self.use_nmap:
-            try:
-                if scan_type == "arp" or scan_type == "ping":
-                    # 使用nmap进行主机发现（优化后的参数配置）
-                    nmap_args = [
-                        '-sn',  # Ping扫描，不扫描端口
-                        '-PE',  # 使用ICMP echo ping（最可靠的方法，避免TCP ping误报）
-                        '--min-rate', '100',  # 降低扫描速率避免误报
-                        '--max-retries', '2',  # 增加重试次数提高准确性
-                        '--host-timeout', '3s',  # 设置主机超时
-                        '-oX', '-',  # XML输出
-                        subnet
-                    ]
-                    
-                    print(f"使用nmap扫描子网 {subnet}...")
-                    output = await self._run_nmap_command(nmap_args)
-                    devices = self._parse_xml_output(output)
-                    
-                    # 补充MAC地址信息（通过ARP表）
-                    arp_devices = await self._scan_arp_table()
-                    arp_dict = {d.ip: d for d in arp_devices}
-                    
-                    # 补充信息：主机名、MAC地址和厂商
-                    for device in devices:
-                        if device.is_online:
-                            # 从ARP表补充MAC地址信息
-                            if device.ip in arp_dict:
-                                arp_device = arp_dict[device.ip]
-                                if not device.mac:
-                                    device.mac = arp_device.mac
-                                if not device.vendor:
-                                    device.vendor = arp_device.vendor
-                            
-                            # 补充主机名
-                            if not device.hostname:
-                                device.hostname = await self._get_hostname(device.ip)
-                            
-                            # 通过OUI数据库获取厂商信息
-                            if device.mac and not device.vendor:
-                                device.vendor = self._get_vendor_from_oui_db(device.mac)
-                    
-                    print(f"nmap扫描完成，发现 {len(devices)} 个设备")
-                    return devices
-                    
-            except Exception as e:
-                print(f"Nmap subnet scan error: {e},")
-                pass
+        try:
+            if scan_type == "arp" or scan_type == "ping":
+                # 使用nmap进行主机发现（优化后的参数配置）
+                nmap_args = [
+                    '-sn',  # Ping扫描，不扫描端口
+                    '-PE',  # 使用ICMP echo ping（最可靠的方法，避免TCP ping误报）
+                    '--min-rate', '100',  # 降低扫描速率避免误报
+                    '--max-retries', '2',  # 增加重试次数提高准确性
+                    '--host-timeout', '3s',  # 设置主机超时
+                    '-oX', '-',  # XML输出
+                    subnet
+                ]
+                
+                print(f"使用nmap扫描子网 {subnet}...")
+                output = await self._run_nmap_command(nmap_args)
+                devices = self._parse_xml_output(output)
+                
+                # 补充MAC地址信息（通过ARP表）
+                arp_devices = await self._scan_arp_table()
+                arp_dict = {d.ip: d for d in arp_devices}
+                
+                # 补充信息：主机名、MAC地址和厂商
+                for device in devices:
+                    if device.is_online:
+                        # 从ARP表补充MAC地址信息
+                        if device.ip in arp_dict:
+                            arp_device = arp_dict[device.ip]
+                            if not device.mac:
+                                device.mac = arp_device.mac
+                            if not device.vendor:
+                                device.vendor = arp_device.vendor
+                        
+                        # 补充主机名
+                        if not device.hostname:
+                            device.hostname = await self._get_hostname(device.ip)
+                        
+                        # 通过OUI数据库获取厂商信息
+                        if device.mac and not device.vendor:
+                            device.vendor = self._get_vendor_from_oui_db(device.mac)
+                
+                print(f"nmap扫描完成，发现 {len(devices)} 个设备")
+                return devices
+                
+        except Exception as e:
+            print(f"Nmap subnet scan error: {e}, 降级到传统方法")
         
         # 降级到传统方法
         try:

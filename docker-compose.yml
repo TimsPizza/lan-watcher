@@ -1,0 +1,66 @@
+services:
+  lan-watcher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lan-watcher
+    restart: unless-stopped
+    
+    ports:
+      - "8000:8000"
+    
+    # 特权模式 - nmap需要特权访问进行网络扫描
+    privileged: true
+    
+    # 环境变量
+    environment:
+      - LAN_WATCHER_HOST=0.0.0.0
+      - LAN_WATCHER_PORT=8000
+      - LAN_WATCHER_RELOAD=false
+    
+    # 数据卷映射 - 持久化JSON存储数据
+    volumes:
+      - ./data:/app/backend/storage/data:rw
+    
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# 可选：如果不使用host网络模式，可以使用以下配置
+# services:
+#   lan-watcher:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     container_name: lan-watcher
+#     restart: unless-stopped
+#     
+#     # 端口映射
+#     ports:
+#       - "8000:8000"
+#     
+#     # 特权模式和网络配置
+#     privileged: true
+#     cap_add:
+#       - NET_ADMIN
+#       - NET_RAW
+#     
+#     # 数据卷映射
+#     volumes:
+#       - ./data:/app/backend/storage:rw
+#     
+#     # 环境变量
+#     environment:
+#       - LAN_WATCHER_HOST=0.0.0.0
+#       - LAN_WATCHER_PORT=8000 

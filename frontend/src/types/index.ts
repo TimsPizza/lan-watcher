@@ -37,7 +37,7 @@ export interface NetworkStats {
 }
 
 export interface ScanResult {
-  status: 'success' | 'error';
+  status: "success" | "error";
   message?: string;
   subnet?: string;
   devices_found?: number;
@@ -109,8 +109,8 @@ export interface AppSettings {
 // 新增：图表配置
 export interface ChartConfig {
   show_offline_periods: boolean;
-  time_format: '12h' | '24h';
-  device_sort_order: 'name' | 'ip' | 'last_seen';
+  time_format: "12h" | "24h";
+  device_sort_order: "name" | "ip" | "last_seen";
 }
 
 // ===== 扫描配置相关类型 =====
@@ -121,24 +121,24 @@ export interface ScanConfig {
   subnet_cidr: string | null;
   auto_detect_subnet: boolean;
   exclude_ips: string[];
-  
+
   // 性能参数
   scan_rate: number;
   max_workers: number;
   scan_timeout: string;
   max_retries: number;
-  
+
   // 功能开关
   resolve_hostnames: boolean;
   fetch_vendor_info: boolean;
   arp_lookup_enabled: boolean;
   fallback_enabled: boolean;
-  
+
   // 高级选项
   ping_methods: string[];
   tcp_ping_ports: number[];
   ack_ping_ports: number[];
-  
+
   // 扫描类型配置
   enable_port_scan: boolean;
   port_range: string;
@@ -191,8 +191,8 @@ export interface DeviceHistoryRecord {
 // 设备活动类型
 export interface DeviceActivity {
   device: Device;
-  activityType: 'online' | 'offline' | 'first_seen';
+  activityType: "online" | "offline" | "first_seen";
   timestamp: string;
   timeAgo: string;
   previousState?: boolean;
-} 
+}
