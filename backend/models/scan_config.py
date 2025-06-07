@@ -106,6 +106,9 @@ class ScanConfig:
             ports_str = ",".join(map(str, self.ack_ping_ports))
             args.extend(["-PA" + ports_str])  # TCP ACK ping
 
+        if "udp" in self.ping_methods:
+            args.append("-PU")  # UDP ping
+            
         # 性能参数
         args.extend(["--max-retries", str(self.max_retries)])
         args.extend(["--min-rate", str(self.scan_rate)])
