@@ -1,3 +1,4 @@
+import React from "react";
 // 临时图标组件，直到 React Icons 安装完成
 const IconWrapper = ({
   children,
@@ -194,11 +195,7 @@ export const getDeviceIcon = (device: {
     return <MdPrint className="h-8 w-8 text-gray-600" />;
   }
 
-  if (
-    hostname.includes("speaker") ||
-    hostname.includes("echo") ||
-    hostname.includes("home")
-  ) {
+  if (hostname.includes("speaker") || hostname.includes("echo")) {
     return <MdSpeaker className="h-8 w-8 text-indigo-600" />;
   }
 
